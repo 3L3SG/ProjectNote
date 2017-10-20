@@ -1,0 +1,2 @@
+# ProjectNote
+core java project
