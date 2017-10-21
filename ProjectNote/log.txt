@@ -1,1 +1,1 @@
-Thread-0 : 1507900838648 : Unparseable date: "TASK"
+Thread-0 : 1508501274689 : null
