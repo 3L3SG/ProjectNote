@@ -3,12 +3,17 @@ package com.lsg.project;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class NoteApp {
@@ -928,62 +933,177 @@ public class NoteApp {
 
 							}
 				break;
-				//--------------------------------------------------------
+				//-------------------------Search-------------------------------
 
-				case 3 : System.out.println("search...");
-				System.out.println("");
-				System.out.println("enter title/keyword to search");
-				System.out.println("");
-				String searchString=scan.next();
-				List<NoteBean> beanList=model.searchGen(searchString);
-				Iterator<NoteBean> it=beanList.iterator();
-				System.out.println("");
-				System.out.println("search result for keyword/title : \""+searchString+"\"");
-				System.out.println("");
-				while (it.hasNext()) {
-					NoteBean bean=it.next();
-					if (bean.getType().equals(NoteType.TASK)) {
-						System.out.println("Title : "+bean.getTitle());
-						System.out.println("Description : "+bean.getDescription());
-						System.out.println("Tags : "+bean.getTags());
-						System.out.println("Creadted date : "+sdf.format(bean.getCreationDate()));
-						System.out.println("Note type : "+bean.getType());
-						System.out.println("Planned date : "+sdf.format(bean.getPlannedDate()));
-						System.out.println("Task Status : "+bean.getStatus());
-						System.out.println("Attachments : "+bean.getAttachment());
-						System.out.println("");
-					}else
-					{
-						System.out.println("Title : "+bean.getTitle());
-						System.out.println("Description : "+bean.getDescription());
-						System.out.println("Tags : "+bean.getTags());
-						System.out.println("Creadted date : "+sdf.format(bean.getCreationDate()));
-						System.out.println("Note type : "+bean.getType());
-						System.out.println("Attachments : "+bean.getAttachment());
-						System.out.println("");
-					}
-				}
-
-				break;
-				//--------------------------------------------------------
-				case 4 : System.out.println("list...");
-				int choiceSort=0;
-				while (choiceSort!=5) {
-						System.out.println("choose type listing");
-						System.out.println("1. list by \"name\" ");
-						System.out.println("2. sort by \"name\" ");
-						System.out.println("3. list all \"task\" notes");
-						System.out.println("4. list all \"self\" notes");
+				case 3 :
+					System.out.println("");
+					System.out.println("enter title/keyword to search");
+					System.out.println("");
+					String searchString=scan.next();
+					List<NoteBean> beanList=model.searchGen(searchString);
+					Iterator<NoteBean> it=beanList.iterator();
+					System.out.println("");
+					System.out.println("search result for keyword/title : \""+searchString+"\"");
+					System.out.println("");
+					while (it.hasNext()) {
+						NoteBean bean=it.next();
+						if (bean.getType().equals(NoteType.TASK)) {
+							System.out.println("Title : "+bean.getTitle());
+							System.out.println("Description : "+bean.getDescription());
+							System.out.println("Tags : "+bean.getTags());
+							System.out.println("Creadted date : "+sdf.format(bean.getCreationDate()));
+							System.out.println("Note type : "+bean.getType());
+							System.out.println("Planned date : "+sdf.format(bean.getPlannedDate()));
+							System.out.println("Task Status : "+bean.getStatus());
+							System.out.println("Attachments : "+bean.getAttachment());
+							System.out.println("");
+						}else
+						{
+							System.out.println("Title : "+bean.getTitle());
+							System.out.println("Description : "+bean.getDescription());
+							System.out.println("Tags : "+bean.getTags());
+							System.out.println("Creadted date : "+sdf.format(bean.getCreationDate()));
+							System.out.println("Note type : "+bean.getType());
+							System.out.println("Attachments : "+bean.getAttachment());
+							System.out.println("");
+						}
 					}
 
-				break;
-				//--------------------------------------------------------
+					break;
 				
-				case 5 : System.out.println("export...");
-				break;
-				//--------------------------------------------------------
+				//--------------------------list------------------------------
+				case 4 : 
+					int choiceSort=0;
+					int countSort=1;
+					while (choiceSort!=3) {
+						System.out.println();
+						System.out.println("choose type of listing");
+						System.out.println("1. list category by \"name\" ");
+						System.out.println("2. list category by \"size\" ");
+						System.out.println("3. go to back");
+						System.out.println();
+						choiceSort=scan.nextInt();
+						switch (choiceSort) {
+						case 1:
+							System.out.println();
+							System.out.println("Listing all categories by \"name\"");
+							List<String> listSort=model.listCats();
+							Collections.sort(listSort);
+							for (String string : listSort) {
+								System.out.println(countSort+". "+string);
+								countSort++;
+							}
+
+							break;
+
+						case 2:
+							System.out.println();
+							System.out.println("Listing all categories by \"size\"");
+							
+							Map<String, Double> map=model.getFileSize(); //method is invoked to get file size
+							
+							SizeComparator sc=new SizeComparator(map); //comparator
+							Map<String,Double> sortMap= new TreeMap<String,Double>(sc);
+							sortMap.putAll(map); //copy all entries
+							Set<Entry<String,Double>> set=sortMap.entrySet();
+							for (Entry<String, Double> entry : set) {
+								String resMap=entry.getKey();
+								String[] mapRes=resMap.split("\\.");
+								System.out.println("category name : \""+mapRes[0]+"\" category size : \""+entry.getValue()+"\" bytes4");
+							}
+							
+							break;
+						case 3:
+							System.out.println();
+							System.out.println("returning back to previous menu..");
+							System.out.println();
+							break;
+
+						default:
+							System.out.println();
+							System.out.println("oops option not supported..plz try again");
+							System.out.println();
+							break;
+						}
+					}
+
+					break;
 				
-				case 6 : System.out.println("remainder...");
+				//---------------------------export-----------------------------
+				case 5 : 
+					int choiceExp=0;
+					String expName=null;
+
+					while (choiceExp!=3) {
+						System.out.println();
+						System.out.println("choose an option");
+						System.out.println("1. export specific category");
+						System.out.println("2. export all irrespictive of category");
+						System.out.println("3. go to back");
+						System.out.println();
+						choiceExp=scan.nextInt();
+
+						switch (choiceExp) {
+						case 1:
+							System.out.println();
+							System.out.println("Enter catagory name to export");
+							System.out.println();
+							List<String> stringList=model.listCats();
+							for (String string : stringList) {
+								System.out.println(string);
+							}
+							System.out.println();
+							expName=scan.next();
+							List<NoteBean> expBean= model.getAllNotes(expName);
+							boolean resExp=model.covertXls(expBean,expName);
+							if (resExp) {
+								System.out.println();
+								System.out.println("Data is saved in \""+expName+".xls\"file successfully.");
+								System.out.println();
+							}else {
+								System.out.println();
+								System.out.println("there is problem in saving to xls");
+								System.out.println();
+							}
+							System.out.println();
+							break;
+
+						case 2: 
+							System.out.println();
+							System.out.println("exporting all notes to a single file");
+							String fName=null;
+							System.out.println();
+							System.out.println("eneter file name to export");
+							System.out.println();
+							fName=scanLine.nextLine();
+							List<NoteBean> allNotes=model.listGen();
+							boolean resExp1=model.covertXls(allNotes,fName);
+							if (resExp1) {
+								System.out.println();
+								System.out.println("Data is saved in \""+fName+".xls\"file successfully.");
+								System.out.println();
+							}else {
+								System.out.println();
+								System.out.println("there is problem in saving to xls");
+								System.out.println();
+							}
+							break;
+
+						case 3:
+							System.out.println();
+							System.out.println("returning back to previous menu..");
+							System.out.println();
+						break;
+
+						default:System.out.println("oops option not supported..try agin");
+							break;
+						}
+					}
+
+					break;
+				
+				//-----------------------remainder---------------------------------
+				case 6 :
 				String toEmailId = "gslaxmikant@gmail.com";       // it should be gmailId (to whom you want to send)
 
 				String subject="** important information **";
@@ -1010,9 +1130,9 @@ public class NoteApp {
 
 
 				break;
-				//---------------------------------------------------------
+				//-------------------------send mail--------------------------------
 				
-				case 7 : System.out.println("send note email...");
+				case 7 : 
 						int genCount=1;
 						List<NoteBean> searchGen=model.listGen();
 						Iterator<NoteBean> itGen=searchGen.iterator();
@@ -1057,14 +1177,23 @@ public class NoteApp {
 						System.out.println("Enter Email subject");
 						String emailSubject=scanLine.nextLine();
 						System.out.println("");
-						model.SendMail(fromEmailId, password, emailId, emailSubject, contentMail);
+						boolean mailRes=model.SendMail(fromEmailId, password, emailId, emailSubject, contentMail);
+						System.out.println("sending mail");
+						System.out.println();
+						if (mailRes) {
+							System.out.println("email sent suceessfully..");
+						}else {
+							System.out.println("there is a problem in sending mail");
+						}
+
 						System.out.println();
 				break;
-				//--------------------------------------------------
+				
+				//----------------------Exit from menu----------------------------
 				case 8 : System.out.println("Exiting from menu....");
 
 				break;
-
+				//----------------------default for choice----------------------------
 				default: System.out.println("option not supported...");
 				break;
 				}
