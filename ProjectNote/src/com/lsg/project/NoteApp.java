@@ -32,8 +32,8 @@ public class NoteApp {
 			NoteType type;
 			NoteStatus status;
 			Date date,pdate;
-			String fromEmailId = "laxmikant2123@gmail.com";
-			String password = "laxmikant21";
+			String fromEmailId = "pie4ar@gmail.com";
+			String password = "pie4ar21";
 			NoteModel model=new NoteModel();
 		outer:	while (choice!=8) {
 				System.out.println("");
