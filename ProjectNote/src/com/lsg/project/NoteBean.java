@@ -2,7 +2,7 @@ package com.lsg.project;
 
 import java.util.Date;
 
-public class NoteBean {
+public class NoteBean implements Comparable<NoteBean> {
 
 	private String title;
 	private String description;
@@ -169,6 +169,12 @@ public class NoteBean {
 		return "NoteBean [title=" + title + ", description=" + description + ", tags=" + tags + ", creationDate="
 				+ creationDate + ", plannedDate=" + plannedDate + ", type=" + type + ", status=" + status
 				+ ", attachment=" + attachment + "]";
+	}
+
+	@Override
+	public int compareTo(NoteBean o) {
+		this.getTitle().compareTo(o.getTitle());
+		return 0;
 	}
 	
 	

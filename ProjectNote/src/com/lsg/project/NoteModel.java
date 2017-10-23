@@ -8,13 +8,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.mail.Authenticator;
 import javax.mail.Message;
@@ -662,15 +667,198 @@ public class NoteModel {
 		return map;
 		
 	}
+
+	//-------------------content generator to send mail----------
+	
+	public String genContent(NoteBean bean) {
+		String contentMail="";
+		if (bean.getType().equals(NoteType.TASK)) {
+			contentMail="Title : "+bean.getTitle()+" , "+
+					" Description :"+bean.getDescription()+" , "+
+					" Tags : "+bean.getTags()+" , "+
+					" Created date : "+sdf.format(bean.getCreationDate())+" , "+
+					" Note type : "+bean.getType()+" , "+
+					" Planned date : "+sdf.format(bean.getPlannedDate())+" , "+
+					" Task Status : "+bean.getStatus()+" , "+
+					" Attachments : "+bean.getAttachment();
+		}else
+		{
+			contentMail="Title : "+bean.getTitle()+" , "+
+					" Description :"+bean.getDescription()+" , "+
+					" Tags : "+bean.getTags()+" , "+
+					" Created date : "+sdf.format(bean.getCreationDate())+" , "+
+					" Note type : "+bean.getType()+" , "+
+					" Attachments : "+bean.getAttachment();
+		}
+		return contentMail;
+		
+	}
+
+	
+	public List<NoteBean> todaysRemainders(Date date){
+		List<NoteBean> beanList=new ArrayList<NoteBean>();
+		NoteBean bean=null;
+		String dt=sdf.format(date);
+		BufferedReader br=null;
+		String line="";
+		File file=null;
+		try {
+			file=new File(".");
+			String[] str=file.list();
+			for (String stringFile : str) {
+				if(stringFile.endsWith(".notes")){
+					br=new BufferedReader(new FileReader(stringFile));
+					while ((line=br.readLine())!=null) {
+						String[] string=line.split(":");
+						if (string.length==8) {
+							if (string[5].equals(dt)) {
+								bean=new NoteBean();
+								bean.setTitle(string[0]);
+								bean.setDescription(string[1]);
+								bean.setTags(string[2]);
+								Date cdate=sdf.parse(string[3]);
+								bean.setCreationDate(cdate);
+								bean.setType(NoteType.TASK);//string[4];
+								Date pdate=sdf.parse(string[5]);
+								bean.setPlannedDate(pdate);
+								if (string[6].equals("NEW")) {
+									bean.setStatus(NoteStatus.NEW);
+								}
+								if (string[6].equals("PENDING")) {
+									bean.setStatus(NoteStatus.PENDING);
+								}
+								if (string[6].equals("COMPLETED")) {
+									bean.setStatus(NoteStatus.COMPLETED);
+								}
+								bean.setAttachment(string[7]);
+								beanList.add(bean);
+							}
+						}
+					}
+					
+				}
+			}
+			
+		}catch (Exception e) {
+			Logger.getInstance().log(e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			if (br!=null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					Logger.getInstance().log(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		return beanList;
+	}
 	
 	
+	//----------------------------------------------------------------------
+	
+	public void mailer() {
+		String toEmailId = "gslaxmikant@gmail.com";       // it should be gmailId (to whom you want to send)
+		String fromEmailId=null;
+		String password=null;
+		String subject="** important information **";
+
+		String content="Hello, This is LSG....";
+
+		Calendar today = Calendar.getInstance();
+		Timer timer = new Timer();
+		
+		timer.schedule(new TimerTask() {
+			public void run() {
+				long min=LocalDateTime.now().getMinute();
+				long hour=LocalDateTime.now().getHour();
+				if(hour==00 && (min==13)){                //6:43PM        //Time at which you want to send the mail //for PM add +12 to your time
+					System.out.println("Sending mail now");	
+					SendMail(fromEmailId, password, toEmailId,subject,content);
+					System.exit(1);
+					
+				}else{
+					System.out.println("Checking for the time");
+				}
+			}
+		}, today.getTime(), TimeUnit.SECONDS.toMillis(5)); //TimeUnit.SECONDS.toMillis(5) -->> interval
+
+
+	}
 	
 	
+	//----------------------------------------------
+	public Config confReader() {
+		Config conf=null;
+		BufferedReader br=null;
+		try {
+			String line="";
+			br= new BufferedReader(new FileReader("config.conf"));
+			line=br.readLine();
+				String[] resConf=line.split(":");
+				conf=new Config();
+				conf.setEmail(resConf[0]);
+				conf.setPassword(resConf[1]);
+				conf.setHrs(resConf[2]);
+				conf.setMins(resConf[3]);
+			
+		} catch (Exception e) {
+			Logger.getInstance().log(e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			if (br!=null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					Logger.getInstance().log(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		return conf;
+		
+		
+	}
 	
 	
+	//-----------------------------------------------
+	public boolean confUpdater(Config conf) {
+		BufferedWriter bw=null;
+		try {
+			bw=new BufferedWriter(new FileWriter("config.conf") );
+			bw.write(conf.getEmail()+":"+conf.getPassword()+":"+conf.getHrs()+":"+conf.getMins());
+
+		} catch (Exception e) {
+			Logger.getInstance().log(e.getMessage());
+			e.printStackTrace();
+			return false;
+		}
+		finally {
+			if (bw!=null) {
+				try {
+					bw.close();
+				} catch (IOException e) {
+					Logger.getInstance().log(e.getMessage());
+					e.printStackTrace();
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	
-	
-	
+	//-----------------------------------------------
+		public boolean deleteConf(){
+			File file=new File("config.conf");
+			if (file.exists()) {
+				file.delete();
+				return true;
+			}
+			return false;
+		}
 	
 	
 	

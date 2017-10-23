@@ -34,21 +34,25 @@ public class NoteApp {
 			Date date,pdate;
 			String fromEmailId = "pie4ar@gmail.com";
 			String password = "pie4ar21";
+			int hrs=0;
+			int mins=0;
 			NoteModel model=new NoteModel();
-		outer:	while (choice!=8) {
+		outer:	while (choice!=10) {
 				System.out.println("");
 				System.out.println("choose an option");
 				System.out.println("1. to create a category");
 				System.out.println("2. to load catagory");
 				System.out.println("3. to search");
-				System.out.println("4. to list");
-				System.out.println("5. to export");
-				System.out.println("6. to to remainder");
-				System.out.println("7. to send note");
-				System.out.println("8. to exit");
+				System.out.println("4. to list category");
+				System.out.println("5. to export category");
+				System.out.println("6. to remove category");
+				System.out.println("7. to check remainder");
+				System.out.println("8. to send note");
+				System.out.println("9. to configure");
+				System.out.println("10. to exit");
 				System.out.println("");
 				while (!scan.hasNextInt()) {
-					System.out.println("enter the value in range of 0-->8");
+					System.out.println("enter the value in range of 0-->9");
 					scan.next();
 				}
 				choice=scan.nextInt();
@@ -497,8 +501,9 @@ public class NoteApp {
 
 					}
 					break;
-					//**********************************************************
-					//**********************************************************
+					//##########################################################
+					//##########################################################
+					
 				case 2 : System.out.println("load category...");
 						System.out.println("enter category name to load");
 						int ch3=0;
@@ -974,7 +979,7 @@ public class NoteApp {
 				//--------------------------list------------------------------
 				case 4 : 
 					int choiceSort=0;
-					int countSort=1;
+					int countSort;
 					while (choiceSort!=3) {
 						System.out.println();
 						System.out.println("choose type of listing");
@@ -987,11 +992,18 @@ public class NoteApp {
 						case 1:
 							System.out.println();
 							System.out.println("Listing all categories by \"name\"");
+							System.out.println();
 							List<String> listSort=model.listCats();
 							Collections.sort(listSort);
 							for (String string : listSort) {
-								System.out.println(countSort+". "+string);
-								countSort++;
+								countSort=1;
+								System.out.println("\""+string+"\" category :");
+								List<NoteBean> lBean=model.listNotes(string);
+								for (NoteBean noteBean : lBean) {
+									System.out.println(countSort+". "+noteBean.getTitle());
+									countSort++;
+								}
+								System.out.println();
 							}
 
 							break;
@@ -999,17 +1011,25 @@ public class NoteApp {
 						case 2:
 							System.out.println();
 							System.out.println("Listing all categories by \"size\"");
-							
+							System.out.println();
 							Map<String, Double> map=model.getFileSize(); //method is invoked to get file size
 							
 							SizeComparator sc=new SizeComparator(map); //comparator
 							Map<String,Double> sortMap= new TreeMap<String,Double>(sc);
 							sortMap.putAll(map); //copy all entries
 							Set<Entry<String,Double>> set=sortMap.entrySet();
+							
 							for (Entry<String, Double> entry : set) {
 								String resMap=entry.getKey();
 								String[] mapRes=resMap.split("\\.");
-								System.out.println("category name : \""+mapRes[0]+"\" category size : \""+entry.getValue()+"\" bytes4");
+								countSort=1;
+								System.out.println("category name : \""+mapRes[0]+"\" category size : \""+entry.getValue()+"\" bytes");
+								List<NoteBean> mBean=model.listNotes(mapRes[0]);
+								for (NoteBean noteBean : mBean) {
+									System.out.println(countSort+". "+noteBean.getTitle());
+									countSort++;
+								}
+								System.out.println();
 							}
 							
 							break;
@@ -1103,72 +1123,83 @@ public class NoteApp {
 					break;
 				
 				//-----------------------remainder---------------------------------
-				case 6 :
-				String toEmailId = "gslaxmikant@gmail.com";       // it should be gmailId (to whom you want to send)
+				case 7 :
+					int remChoice=0;
+					while (remChoice!=3) {
+						System.out.println("Choose an option");
+						System.out.println("1.list todays Remainder");
+						System.out.println("2.change remainder notification time");
+						System.out.println("3.to go back");
+						remChoice=scan.nextInt();
+						switch (remChoice) {
+						case 1:
+							System.out.println();
+							System.out.println("Listing Todays Remainders..");
+							Date dt=new Date();
+							int countRem=1;
+							List<NoteBean> remBean=model.todaysRemainders(dt);
+							for (NoteBean noteBean : remBean) {
+								System.out.println(countRem+". Note Title :\""+noteBean.getTitle()+"\"  Description :\""+noteBean.getDescription()+"\"");
+								System.out.println();
+							}
+							System.out.println();
+							break;
+						case 2:
+							Config conf=model.confReader();
+							System.out.println();
+							System.out.println("Enter \"Hour\" in 24 Hrs format [0-23]");
+							hrs=scan.nextInt();
+							conf.setHrs(hrs+"");
+							System.out.println();
+							System.out.println("Enter \"minutes\" [0-59]");
+							mins=scan.nextInt();
+							conf.setMins(mins+"");
+							System.out.println();
+							if (model.deleteConf()) {
+								boolean b=model.confUpdater(conf);
+								if (b) {
+									System.out.println("reminder time updated successfully");
+									System.out.println();
+								}else {
+									System.out.println("there is a problem in updating...");
+									System.out.println();
+								}
+							}
 
-				String subject="** important information **";
-
-				String content="Hello, This is LSG....";
-
-				Calendar today = Calendar.getInstance();
-				Timer timer = new Timer();
-
-				timer.schedule(new TimerTask() {
-					public void run() {
-						long min=LocalDateTime.now().getMinute();
-						long hour=LocalDateTime.now().getHour();
-						if(hour==00 && (min==13)){                //6:43PM        //Time at which you want to send the mail //for PM add +12 to your time
-							System.out.println("Sending mail now");	
-							model.SendMail(fromEmailId, password, toEmailId,subject,content);
-							System.exit(1);
+							break;
+						case 3:
+							System.out.println("going back to previous menu..");
 							
-						}else{
-							System.out.println("Checking for the time");
+						default:
+							System.out.println("ooops option not supported...");
+							break;
 						}
 					}
-				}, today.getTime(), TimeUnit.SECONDS.toMillis(5)); //TimeUnit.SECONDS.toMillis(5) -->> interval
 
-
-				break;
+					break;
 				//-------------------------send mail--------------------------------
 				
-				case 7 : 
+				case 8 : 
 						int genCount=1;
 						List<NoteBean> searchGen=model.listGen();
 						Iterator<NoteBean> itGen=searchGen.iterator();
-						System.out.println("enter title of note to send..");
+						System.out.println("enter title of note to send.. [enter \"*\" to go back]");
 						while (itGen.hasNext()) {
 							NoteBean bean=itGen.next();
 							System.out.println(genCount+". "+bean.getTitle());
 							genCount++;
 						}
 						System.out.println();
-						String titleString=scan.next();
-						System.out.println();
+						String titleString=scanLine.nextLine();
+						if (titleString.equals("*")) {
+								continue;
+						}
 						Iterator<NoteBean> contentGen=searchGen.iterator();
 						String contentMail=null;
 						while (contentGen.hasNext()) {
 							NoteBean bean=contentGen.next();
 							if (bean.getTitle().equals(titleString)) {
-								if (bean.getType().equals(NoteType.TASK)) {
-									contentMail="Title : "+bean.getTitle()+" , "+
-											" Description :"+bean.getDescription()+" , "+
-											" Tags : "+bean.getTags()+" , "+
-											" Created date : "+sdf.format(bean.getCreationDate())+" , "+
-											" Note type : "+bean.getType()+" , "+
-											" Planned date : "+sdf.format(bean.getPlannedDate())+" , "+
-											" Task Status : "+bean.getStatus()+" , "+
-											" Attachments : "+bean.getAttachment();
-								}else
-								{
-									contentMail="Title : "+bean.getTitle()+" , "+
-											" Description :"+bean.getDescription()+" , "+
-											" Tags : "+bean.getTags()+" , "+
-											" Created date : "+sdf.format(bean.getCreationDate())+" , "+
-											" Note type : "+bean.getType()+" , "+
-											" Attachments : "+bean.getAttachment();
-								}
-
+								contentMail=model.genContent(bean);
 							}
 						}
 						System.out.println("Enter Email to send note");
@@ -1177,9 +1208,9 @@ public class NoteApp {
 						System.out.println("Enter Email subject");
 						String emailSubject=scanLine.nextLine();
 						System.out.println("");
-						boolean mailRes=model.SendMail(fromEmailId, password, emailId, emailSubject, contentMail);
-						System.out.println("sending mail");
+						System.out.println("sending mail...");
 						System.out.println();
+						boolean mailRes=model.SendMail(fromEmailId, password, emailId, emailSubject, contentMail);
 						if (mailRes) {
 							System.out.println("email sent suceessfully..");
 						}else {
@@ -1189,12 +1220,46 @@ public class NoteApp {
 						System.out.println();
 				break;
 				
-				//----------------------Exit from menu----------------------------
-				case 8 : System.out.println("Exiting from menu....");
-
+				
+				//--------------------------remove category--------------------------------------
+				case 6: 
+					System.out.println();
+					System.out.println("Enter category name to dalete [enter \"*\" to go back]");
+					System.out.println();
+					int countDel=1;
+					String remCat=null;
+					List<String> stringList=model.listCats();
+					for (String string : stringList) {
+						System.out.println(countDel+". "+string);
+						countDel++;
+					}
+					System.out.println();
+					while (!(model.isCatExist(remCat=scan.next()))) {
+						if (remCat.equals("*")) {
+							continue outer;
+						}
+						System.out.println("category does not exists.. try again [enter \"*\" to go back] ");
+						continue;
+					}
+					System.out.println();
+					System.out.println("all notes in "+remCat+" category will be deleted. do you really want delete eneter \"yes\" or \"no\"");
+					String userIn=scan.next();
+					if (userIn.toLowerCase().equals("yes") || userIn.toLowerCase().equals("y") ) {
+						model.deleteCat(remCat);
+						System.out.println();
+						System.out.println(remCat+" category Deleted successfully");
+					}
+					break;
+				//----------------------default for choice------------------------
+				default: 
+					System.out.println();
+					System.out.println("option not supported...");
+					System.out.println();
 				break;
-				//----------------------default for choice----------------------------
-				default: System.out.println("option not supported...");
+				
+				//----------------------Exit from menu----------------------------
+				case 9 : System.out.println("Exiting from menu....");
+
 				break;
 				}
 			}
@@ -1209,3 +1274,12 @@ public class NoteApp {
 	}
 
 }
+
+
+
+
+
+
+
+
+
