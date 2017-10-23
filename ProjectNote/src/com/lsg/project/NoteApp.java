@@ -1,8 +1,6 @@
 package com.lsg.project;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -11,10 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 public class NoteApp {
 
@@ -22,7 +17,9 @@ public class NoteApp {
 		Scanner scan=new Scanner(System.in);
 		Scanner scanLine=new Scanner(System.in);
 		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
-
+		NoteModel model=new NoteModel();
+		model.scheduleMailer(); //an event checker task is started..
+		
 		try {
 			int choice=0;
 			int ch2=0;
@@ -36,7 +33,7 @@ public class NoteApp {
 			String password = "pie4ar21";
 			int hrs=0;
 			int mins=0;
-			NoteModel model=new NoteModel();
+			
 		outer:	while (choice!=10) {
 				System.out.println("");
 				System.out.println("choose an option");
@@ -1169,9 +1166,12 @@ public class NoteApp {
 							break;
 						case 3:
 							System.out.println("going back to previous menu..");
+							System.out.println();
+							break;
 							
 						default:
 							System.out.println("ooops option not supported...");
+							System.out.println();
 							break;
 						}
 					}
@@ -1250,16 +1250,56 @@ public class NoteApp {
 						System.out.println(remCat+" category Deleted successfully");
 					}
 					break;
+				
+				case 9:
+					int conChoice=0;
+					Config con=model.confReader();
+					while (conChoice!=2) {
+						System.out.println("Choose an option");
+						System.out.println("1.to configure Email");
+						System.out.println("2.to go back");
+						conChoice=scan.nextInt();
+						switch (conChoice) {
+						case 1:
+							System.out.println();
+							System.out.println("Enter correct email address eg : abc@gmail.com ");
+							String mail=scan.next();
+							con.setEmail(mail);
+							System.out.println();
+							System.out.println("enter correct password eg: 12345678");
+							String pwd=scan.next();
+							con.setPassword(pwd);
+							System.out.println();
+							if (model.deleteConf()) {
+								boolean reb=model.confUpdater(con);
+								if (reb) {
+									System.out.println("Email and password updated succesfully");
+									System.out.println();
+								}else {
+									System.out.println("oops there is probliem in updating...");
+									System.out.println();
+								}
+							}
+							break;
+						case 2:
+							System.out.println("returning back to previous menu..");
+							System.out.println();
+							break;
+						default:
+							break;
+						}
+					}
+					break;
+				//----------------------Exit from menu----------------------------
+				case 10 : System.out.println("exiting from main menu....");
+
+				break;
+				
 				//----------------------default for choice------------------------
 				default: 
 					System.out.println();
 					System.out.println("option not supported...");
 					System.out.println();
-				break;
-				
-				//----------------------Exit from menu----------------------------
-				case 9 : System.out.println("Exiting from menu....");
-
 				break;
 				}
 			}

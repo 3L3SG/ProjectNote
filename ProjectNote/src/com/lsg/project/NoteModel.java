@@ -645,6 +645,7 @@ public class NoteModel {
 
 		return true;
 	}
+	
 //-----------------------------list by size-----------------------
 	public Map<String,Double> getFileSize() {
 		Map<String,Double> map=new LinkedHashMap<String,Double>();
@@ -673,22 +674,22 @@ public class NoteModel {
 	public String genContent(NoteBean bean) {
 		String contentMail="";
 		if (bean.getType().equals(NoteType.TASK)) {
-			contentMail="Title : "+bean.getTitle()+" , "+
-					" Description :"+bean.getDescription()+" , "+
-					" Tags : "+bean.getTags()+" , "+
-					" Created date : "+sdf.format(bean.getCreationDate())+" , "+
-					" Note type : "+bean.getType()+" , "+
-					" Planned date : "+sdf.format(bean.getPlannedDate())+" , "+
-					" Task Status : "+bean.getStatus()+" , "+
-					" Attachments : "+bean.getAttachment();
+		contentMail="Title : "+bean.getTitle()+"\n"+
+					"Description : "+bean.getDescription()+"\n"+
+					"Tags : "+bean.getTags()+"\n"+
+					"Created date : "+sdf.format(bean.getCreationDate())+"\n"+
+					"Note type : "+bean.getType()+"\n"+
+					"Planned date : "+sdf.format(bean.getPlannedDate())+"\n"+
+					"Task Status : "+bean.getStatus()+"\n"+
+					"Attachments : "+bean.getAttachment();
 		}else
 		{
-			contentMail="Title : "+bean.getTitle()+" , "+
-					" Description :"+bean.getDescription()+" , "+
-					" Tags : "+bean.getTags()+" , "+
-					" Created date : "+sdf.format(bean.getCreationDate())+" , "+
-					" Note type : "+bean.getType()+" , "+
-					" Attachments : "+bean.getAttachment();
+		contentMail="Title : "+bean.getTitle()+"\n"+
+					"Description : "+bean.getDescription()+"\n"+
+					"Tags : "+bean.getTags()+"\n"+
+					"Created date : "+sdf.format(bean.getCreationDate())+"\n"+
+					"Note type : "+bean.getType()+"\n"+
+					"Attachments : "+bean.getAttachment();
 		}
 		return contentMail;
 		
@@ -759,31 +760,36 @@ public class NoteModel {
 	
 	//----------------------------------------------------------------------
 	
-	public void mailer() {
-		String toEmailId = "gslaxmikant@gmail.com";       // it should be gmailId (to whom you want to send)
-		String fromEmailId=null;
-		String password=null;
-		String subject="** important information **";
-
-		String content="Hello, This is LSG....";
-
+	public boolean scheduleMailer() {
+		String toEmailId = "gslaxmikant@gmail.com";     
+		Config conf=confReader();
+		String fromEmailId=conf.getEmail();
+		String password=conf.getPassword();
+		String subject="** Remainder information **";
+		int hrs=Integer.parseInt(conf.getHrs());
+		int mins=Integer.parseInt(conf.getMins());
 		Calendar today = Calendar.getInstance();
 		Timer timer = new Timer();
-		
+		Date date=new Date();
 		timer.schedule(new TimerTask() {
 			public void run() {
 				long min=LocalDateTime.now().getMinute();
 				long hour=LocalDateTime.now().getHour();
-				if(hour==00 && (min==13)){                //6:43PM        //Time at which you want to send the mail //for PM add +12 to your time
-					System.out.println("Sending mail now");	
-					SendMail(fromEmailId, password, toEmailId,subject,content);
-					System.exit(1);
-					
-				}else{
-					System.out.println("Checking for the time");
+				String content="";
+				if(hour==hrs && (min==mins)){             //Time in 24 hrs format to send mail..
+					List<NoteBean> bean=todaysRemainders(date);
+					for (NoteBean noteBean : bean) {
+						content=genContent(noteBean);
+						System.out.println("Sending mail now");	
+						SendMail(fromEmailId, password, toEmailId,subject,content);
+
+					}
+					timer.cancel();
+					timer.purge();
 				}
 			}
 		}, today.getTime(), TimeUnit.SECONDS.toMillis(5)); //TimeUnit.SECONDS.toMillis(5) -->> interval
+		return true;
 
 
 	}
@@ -851,7 +857,7 @@ public class NoteModel {
 	}
 	
 	//-----------------------------------------------
-		public boolean deleteConf(){
+	public boolean deleteConf(){
 			File file=new File("config.conf");
 			if (file.exists()) {
 				file.delete();
